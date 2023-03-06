@@ -125,7 +125,7 @@ static void free_nbfts(struct list_head *nbft_list)
 	if (x)			\
 		goto fail;
 
-static json_object *hfi_to_json(struct nbft_hfi *hfi)
+static json_object *hfi_to_json(struct nbft_info_hfi *hfi)
 {
 	struct json_object *hfi_json;
 
@@ -161,7 +161,7 @@ fail:
 	return NULL;
 }
 
-static json_object *ssns_to_json(struct nbft_subsystem_ns *ss)
+static json_object *ssns_to_json(struct nbft_info_subsystem_ns *ss)
 {
 	struct json_object *ss_json;
 	struct json_object *hfi_array_json;
@@ -195,20 +195,20 @@ static json_object *ssns_to_json(struct nbft_subsystem_ns *ss)
 		json_str_p = json_str;
 
 		switch (ss->nid_type) {
-		case ieee_eui_64:
+		case NBFT_INFO_NID_TYPE_EUI64:
 			check_fail(json_object_add_value_string(ss_json, "nid_type", "eui64"));
 			for (i = 0; i < 8; i++)
 				json_str_p += sprintf(json_str_p, "%02x", ss->nid[i]);
 			break;
 
-		case nguid:
+		case NBFT_INFO_NID_TYPE_NGUID:
 			check_fail(json_object_add_value_string(ss_json, "nid_type", "nguid"));
 			for (i = 0; i < 16; i++)
 				json_str_p += sprintf(json_str_p, "%02x", ss->nid[i]);
 			break;
 
 #ifdef CONFIG_LIBUUID
-		case ns_uuid:
+		case NBFT_INFO_NID_TYPE_NS_UUID:
 			check_fail(json_object_add_value_string(ss_json, "nid_type", "uuid"));
 			uuid_unparse_lower(ss->nid, json_str);
 			break;
@@ -233,7 +233,7 @@ fail:
 	return NULL;
 }
 
-static json_object *discovery_to_json(struct nbft_discovery *disc)
+static json_object *discovery_to_json(struct nbft_info_discovery *disc)
 {
 	struct json_object *disc_json;
 
@@ -277,9 +277,9 @@ static struct json_object *nbft_to_json(struct nbft_info *nbft, bool show_subsys
 		json_object_add_value_int(host_json, "host_id_configured", nbft->host.host_id_configured);
 		json_object_add_value_int(host_json, "host_nqn_configured", nbft->host.host_nqn_configured);
 		json_object_add_value_string(host_json, "primary_admin_host_flag",
-					     nbft->host.primary == not_indicated ? "not indicated" :
-					     nbft->host.primary == unselected ? "unselected" :
-					     nbft->host.primary == selected ? "selected" : "reserved");
+					     nbft->host.primary == NBFT_INFO_PRIMARY_ADMIN_HOST_FLAG_NOT_INDICATED ? "not indicated" :
+					     nbft->host.primary == NBFT_INFO_PRIMARY_ADMIN_HOST_FLAG_UNSELECTED ? "unselected" :
+					     nbft->host.primary == NBFT_INFO_PRIMARY_ADMIN_HOST_FLAG_SELECTED ? "selected" : "reserved");
 		if (json_object_object_add(nbft_json, "host", host_json)) {
 			json_free_object(host_json);
 			goto fail;
@@ -287,7 +287,7 @@ static struct json_object *nbft_to_json(struct nbft_info *nbft, bool show_subsys
 	}
 	if (show_subsys) {
 		struct json_object *subsys_array_json, *subsys_json;
-		struct nbft_subsystem_ns *ss;
+		struct nbft_info_subsystem_ns *ss;
 
 		subsys_array_json = json_create_array();
 		if (!subsys_array_json)
@@ -308,7 +308,7 @@ static struct json_object *nbft_to_json(struct nbft_info *nbft, bool show_subsys
 	}
 	if (show_hfi) {
 		struct json_object *hfi_array_json, *hfi_json;
-		struct nbft_hfi *hfi;
+		struct nbft_info_hfi *hfi;
 
 		hfi_array_json = json_create_array();
 		if (!hfi_array_json)
@@ -329,7 +329,7 @@ static struct json_object *nbft_to_json(struct nbft_info *nbft, bool show_subsys
 	}
 	if (show_discovery) {
 		struct json_object *discovery_array_json, *discovery_json;
-		struct nbft_discovery *disc;
+		struct nbft_info_discovery *disc;
 
 		discovery_array_json = json_create_array();
 		if (!discovery_array_json)
@@ -384,7 +384,7 @@ fail:
 
 static void print_nbft_hfi_info(struct nbft_info *nbft)
 {
-	struct nbft_hfi *hfi;
+	struct nbft_info_hfi *hfi;
 
 	if (list_empty(&nbft->hfi_list))
 		return;
@@ -407,7 +407,7 @@ static void print_nbft_hfi_info(struct nbft_info *nbft)
 
 static void print_nbft_discovery_info(struct nbft_info *nbft)
 {
-	struct nbft_discovery *disc;
+	struct nbft_info_discovery *disc;
 
 	if (list_empty(&nbft->discovery_list))
 		return;
@@ -421,7 +421,7 @@ static void print_nbft_discovery_info(struct nbft_info *nbft)
 
 static void print_nbft_subsys_info(struct nbft_info *nbft)
 {
-	struct nbft_subsystem_ns *ss;
+	struct nbft_info_subsystem_ns *ss;
 	int i;
 
 	if (list_empty(&nbft->subsystem_ns_list))
@@ -532,8 +532,8 @@ int connect_nbft(const char *desc, int argc, char **argv)
 	char *format = "normal";
 	struct list_head nbft_list;
 	struct nbft_info *nbft;
-	struct nbft_subsystem_ns *ss;
-	struct nbft_hfi *hfi;
+	struct nbft_info_subsystem_ns *ss;
+	struct nbft_info_hfi *hfi;
 
 	OPT_ARGS(opts) = {
 		OPT_STRING("config", 'J', "FILE", &config_file, nvmf_config_file),
