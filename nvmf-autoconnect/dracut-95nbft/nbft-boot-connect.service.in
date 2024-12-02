@@ -13,6 +13,11 @@ Before=remote-fs-pre.target
 [Service]
 RestrictAddressFamilies=AF_INET AF_INET6
 Type=oneshot
+# Connection attempt recovery
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=0
+StartLimitBurst=0
 # No 'modprobe@.service' available in the initramfs
 ExecStartPre=-/sbin/modprobe nvme-fabrics
 ExecStart=/usr/sbin/nvme connect-all --nbft
